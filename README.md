@@ -47,8 +47,8 @@ ollama pull nomic-embed-text
 Clone the repository:
 
 ```bash
-git clone https://github.com/riccardo-pala/financial-rag-local.git
-cd financial-rag-local
+git clone https://github.com/riccardo-pala/financial-rag.git
+cd financial-rag
 ```
 
 Create and activate a virtual environment:
@@ -142,7 +142,7 @@ To use a different local model, pull it with Ollama and update `LLM_MODEL`.
 ## Project Structure
 
 ```text
-financial-rag-local/
+financial-rag/
 |-- data/                    # Local PDF files, ignored by Git
 |-- chroma_db/               # Local vector database, ignored by Git
 |-- src/
