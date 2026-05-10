@@ -71,4 +71,5 @@ pyproject.toml.local
 
 # Vector Database and Data
 chroma_db/
-data/
+data/*
+!data/en-bolleco-BCE-2-2026.pdf

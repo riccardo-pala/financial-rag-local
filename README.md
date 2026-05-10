@@ -1,41 +1,23 @@
 # Financial RAG Assistant
 
-Financial RAG Assistant is a local Retrieval Augmented Generation application for querying financial documents with open-source models. It combines PDF ingestion, local embeddings, Chroma vector search, Ollama, LangChain, and a Streamlit chat interface.
+Financial RAG Assistant is a local Retrieval Augmented Generation application for asking questions about financial PDF documents. It combines local PDF processing, Chroma vector search, Ollama, LangChain, and a Streamlit chat interface.
 
-The project is designed for private analysis of reports, prospectuses, policy documents, compliance material, and market research notes without sending document content to external AI services.
+The app is designed for private document analysis: reports, prospectuses, compliance documents, policy material, and market research notes can be explored locally without sending their content to hosted AI services.
 
 ## Highlights
 
-- Local-first RAG workflow for PDF documents.
-- Offline LLM inference through Ollama and Llama 3.
-- Local embedding generation with Nomic Embed Text.
-- Persistent Chroma vector database stored on disk.
-- Streamlit chat UI for document-grounded questions.
-- Strict prompt behavior that avoids answering outside the retrieved context.
-
-## Architecture
-
-```text
-PDF files
-   |
-   v
-src/ingest.py
-   |  load PDFs, split text, generate embeddings
-   v
-chroma_db/
-   |
-   v
-src/app.py
-   |  retrieve relevant chunks, build prompt, call Ollama
-   v
-Streamlit chat UI
-```
+- Upload and remove PDF documents from the web interface.
+- Rebuild the document index from the sidebar.
+- Ask document-grounded questions through a chat UI.
+- Run Llama 3 locally through Ollama.
+- Generate embeddings locally with Nomic Embed Text.
+- Test the app immediately with the included sample PDF.
 
 ## Requirements
 
 - Python 3.10 or newer
 - [Ollama](https://ollama.ai) installed and running
-- The required Ollama models:
+- Required Ollama models:
 
 ```bash
 ollama pull llama3
@@ -71,63 +53,50 @@ Install dependencies:
 pip install -r requirements.txt
 ```
 
-Make sure Ollama is running:
+Start Ollama:
 
 ```bash
 ollama serve
 ```
 
-In another terminal, verify the models:
-
-```bash
-ollama list
-```
-
-## Usage
-
-Create a `data/` directory and add your PDF files:
-
-```bash
-mkdir -p data
-cp /path/to/your/documents/*.pdf data/
-```
-
-Run the ingestion pipeline:
-
-```bash
-python src/ingest.py
-```
-
-Expected output:
-
-```text
-Starting the ingestion process...
-Loading: document1.pdf...
-Loaded 150 pages in total.
-Documents split into 500 chunks.
-Generating vectors with Ollama (nomic-embed-text) and saving them to ChromaDB...
-Ingestion completed successfully. The database is ready in 'chroma_db/'.
-```
-
-Start the Streamlit app:
+Run the app:
 
 ```bash
 streamlit run src/app.py
 ```
 
-Open `http://localhost:8501` and ask questions about the indexed documents.
+Open `http://localhost:8501`.
+
+## Using The App
+
+The sidebar is the document control panel:
+
+- **Upload PDFs** adds new documents to the local document folder.
+- **Remove selected PDF** removes a document from the local document folder.
+- **Rebuild document index** refreshes the vector index after uploads or removals.
+- The document list shows which PDFs are currently available for analysis.
+
+After the index is ready, use the chat input to ask questions about the indexed PDFs. The app also includes quick prompt buttons for common financial review tasks.
+
+## Optional CLI Ingestion
+
+You can also add PDFs manually and build the index from the command line:
+
+```bash
+mkdir -p data
+cp /path/to/your/documents/*.pdf data/
+python src/ingest.py
+```
+
+Then start the app:
+
+```bash
+streamlit run src/app.py
+```
 
 ## Configuration
 
-The main runtime parameters are defined near the top of the Python files.
-
-In `src/ingest.py`:
-
-```python
-DATA_FOLDER = "data"
-DB_FOLDER = "chroma_db"
-EMBEDDING_MODEL = "nomic-embed-text"
-```
+Main settings live near the top of the Python files.
 
 In `src/app.py`:
 
@@ -137,48 +106,30 @@ LLM_MODEL = "llama3"
 K_RESULTS = 4
 ```
 
+In `src/ingest.py`:
+
+```python
+DATA_FOLDER = "data"
+DB_FOLDER = "chroma_db"
+EMBEDDING_MODEL = "nomic-embed-text"
+```
+
 To use a different local model, pull it with Ollama and update `LLM_MODEL`.
 
-## Project Structure
-
-```text
-financial-rag/
-|-- data/                    # Local PDF files, ignored by Git
-|-- chroma_db/               # Local vector database, ignored by Git
-|-- src/
-|   |-- app.py               # Streamlit RAG chat application
-|   `-- ingest.py            # PDF ingestion and embedding pipeline
-|-- .gitignore
-|-- requirements.txt         # Direct project dependencies
-|-- requirements-lock.txt    # Locked dependency snapshot
-`-- README.md
-```
-
-## Dependency Files
-
-Use `requirements.txt` for regular setup.
-
-Use `requirements-lock.txt` when you need a more reproducible environment:
-
-```bash
-pip install -r requirements-lock.txt
-```
-
-## Privacy and Data Handling
+## Privacy
 
 - Documents remain on your machine.
 - Embeddings are generated locally through Ollama.
-- The vector database is stored locally in `chroma_db/`.
-- `data/` and `chroma_db/` are ignored by Git to avoid committing private documents or generated indexes.
-- No document content is intentionally sent to hosted LLM APIs by this application.
+- The vector index is stored locally.
+- The application does not intentionally send document content to hosted LLM APIs.
 
 ## Limitations
 
-- Only PDF ingestion is currently supported.
+- Only PDF documents are currently supported.
 - OCR is not included, so scanned PDFs may require preprocessing.
-- Answers depend on the quality of PDF extraction and retrieved chunks.
-- The app does not currently show source citations in the UI.
-- The generated answers are not financial advice.
+- Answers depend on the quality of PDF text extraction and retrieval.
+- The app does not currently show source citations in the chat.
+- Generated answers are not financial advice.
 
 ## Troubleshooting
 
@@ -190,7 +141,7 @@ Start Ollama:
 ollama serve
 ```
 
-Then verify that the server responds:
+Then verify that the models are available:
 
 ```bash
 ollama list
@@ -205,48 +156,16 @@ ollama pull llama3
 ollama pull nomic-embed-text
 ```
 
-### No documents are found
+### Uploaded documents are not used in answers
 
-Make sure PDF files exist in the `data/` directory:
-
-```bash
-ls data/
-```
-
-Then rerun ingestion:
-
-```bash
-python src/ingest.py
-```
+Click **Rebuild document index** in the sidebar after uploading or removing PDFs.
 
 ### Answers are incomplete or not relevant
 
-- Re-run ingestion after adding or replacing documents.
+- Rebuild the document index after changing the document set.
+- Try asking a more specific question.
 - Increase `K_RESULTS` in `src/app.py` to retrieve more context.
-- Improve the prompt template in `src/app.py` for your document type.
-- Check whether the source PDFs contain extractable text.
-
-### Chroma warnings
-
-Some LangChain or Chroma versions may emit deprecation warnings. They are usually non-blocking. If they become errors, update the Chroma integration and imports according to the installed package versions.
-
-## Roadmap
-
-- Add source citations and document metadata in answers.
-- Support DOCX, TXT, and Markdown files.
-- Add OCR support for scanned PDFs.
-- Add document-level filters.
-- Add persisted chat history.
-- Add automated tests for ingestion and RAG pipeline setup.
-
-## Contributing
-
-Contributions are welcome. Before opening a pull request:
-
-1. Keep private documents out of the repository.
-2. Run the ingestion flow with a small sample PDF.
-3. Start the Streamlit app and verify that questions can be answered.
-4. Keep changes focused and document any new configuration.
+- Check whether the PDF contains extractable text.
 
 ## Disclaimer
 
