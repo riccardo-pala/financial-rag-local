@@ -130,7 +130,9 @@ http://localhost:8501
 3. Click **Rebuild document index** to parse PDFs, create chunks, generate embeddings, and refresh the Chroma index.
 4. Ask questions in the chat input.
 5. Use **Stop generation** if you want to interrupt a running answer.
-6. Use **Remove selected PDF** and rebuild the index when you want to change the document set.
+6. Use the remove action next to each document when you want to change the document set.
+
+After adding or removing PDFs, the app requires a new index rebuild before accepting more questions. This prevents answers from being generated against an outdated document index.
 
 The repository includes a sample financial PDF, so you can test the app immediately even before uploading your own documents.
 

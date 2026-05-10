@@ -286,6 +286,10 @@ div[data-baseweb="menu"] svg {
     background: #fee2e2;
     color: #991b1b;
 }
+.status-stale {
+    background: #fef3c7;
+    color: #92400e;
+}
 div[data-testid="stChatMessage"] {
     background: rgba(255, 255, 255, 0.74);
     border: 1px solid rgba(219, 227, 239, 0.85);
@@ -397,38 +401,38 @@ div[class*="stChatFloatingInputContainer"] {
     background: #f0fdfa !important;
 }
 div.stButton > button {
-    background: #ffffff;
-    border-radius: 10px;
-    border-color: var(--line);
-    color: var(--ink);
-    font-weight: 700;
+    background: #ffffff !important;
+    border-radius: 10px !important;
+    border-color: var(--line) !important;
+    color: var(--ink) !important;
+    font-weight: 700 !important;
 }
 div.stButton > button:hover {
-    background: #f0fdfa;
-    border-color: var(--accent-strong);
-    color: var(--accent-strong);
+    background: #f0fdfa !important;
+    border-color: var(--accent-strong) !important;
+    color: var(--accent-strong) !important;
 }
 div.stButton > button[kind="primary"] {
-    background: var(--accent-strong);
-    border-color: var(--accent-strong);
-    color: #ffffff;
+    background: var(--accent-strong) !important;
+    border-color: var(--accent-strong) !important;
+    color: #ffffff !important;
 }
 div.stButton > button[kind="primary"]:hover {
-    background: #115e59;
-    border-color: #115e59;
-    color: #ffffff;
+    background: #115e59 !important;
+    border-color: #115e59 !important;
+    color: #ffffff !important;
 }
 [data-testid="stSidebar"] div.stButton > button[kind="primary"],
 [data-testid="stSidebar"] div.stButton > button[kind="primary"] * {
-    color: #ffffff;
+    color: #ffffff !important;
 }
 [data-testid="stSidebar"] div.stButton > button,
 [data-testid="stSidebar"] div.stButton > button * {
-    color: var(--ink);
+    color: var(--ink) !important;
 }
 [data-testid="stSidebar"] div.stButton > button[kind="primary"],
 [data-testid="stSidebar"] div.stButton > button[kind="primary"] * {
-    color: #ffffff;
+    color: #ffffff !important;
 }
 </style>
 """

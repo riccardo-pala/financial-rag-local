@@ -3,7 +3,7 @@ import html
 
 import streamlit as st
 
-from config import EMBEDDING_MODEL, K_RESULTS, LLM_MODEL, SAMPLE_DOCUMENTS
+from config import EMBEDDING_MODEL, K_RESULTS, LLM_MODEL
 from documents import (
     index_exists,
     list_loaded_documents,
@@ -47,14 +47,29 @@ def render_document_card(document):
     )
 
 
+def mark_index_stale():
+    st.session_state.index_dirty = True
+    st.session_state.active_prompt = None
+    st.session_state.is_generating = False
+
+
 def render_sidebar(on_index_rebuilt):
     documents = list_loaded_documents()
     db_ready = index_exists()
+    index_dirty = st.session_state.index_dirty
 
     with st.sidebar:
         st.markdown("## Financial RAG")
-        status_class = "status-ready" if db_ready else "status-missing"
-        status_text = "Index ready" if db_ready else "Index missing"
+        if index_dirty:
+            status_class = "status-stale"
+            status_text = "Rebuild required"
+        elif db_ready:
+            status_class = "status-ready"
+            status_text = "Index ready"
+        else:
+            status_class = "status-missing"
+            status_text = "Index missing"
+
         st.markdown(
             f'<span class="status-pill {status_class}">{status_text}</span>',
             unsafe_allow_html=True,
@@ -62,14 +77,34 @@ def render_sidebar(on_index_rebuilt):
 
         col_a, col_b = st.columns(2)
         col_a.metric("PDFs", len(documents))
-        col_b.metric("Chunks", K_RESULTS)
+        col_b.metric(
+            "Context passages",
+            K_RESULTS,
+            help="Number of retrieved document passages used to answer each question.",
+        )
 
         st.divider()
         st.markdown("### Documents")
 
         if documents:
             for document in documents:
-                render_document_card(document)
+                doc_col, action_col = st.columns([0.82, 0.18], vertical_alignment="center")
+                with doc_col:
+                    render_document_card(document)
+                with action_col:
+                    if st.button(
+                        "\u00d7",
+                        key=f"remove_document_{document['name']}",
+                        help=f"Remove {document['name']}",
+                        type="primary",
+                        use_container_width=True,
+                    ):
+                        if remove_document(document["name"]):
+                            mark_index_stale()
+                            st.warning(f"Removed {document['name']}. Rebuild the index before asking new questions.")
+                            st.rerun()
+                        else:
+                            st.error("The selected file could not be removed.")
         else:
             st.info("No PDF files found in data/.")
 
@@ -82,31 +117,23 @@ def render_sidebar(on_index_rebuilt):
         if uploaded_files and st.button("Add uploaded PDFs", use_container_width=True):
             saved_files = save_uploaded_documents(uploaded_files)
             if saved_files:
-                st.success(f"Added {len(saved_files)} PDF file(s). Rebuild the index to include them.")
+                mark_index_stale()
+                st.success(f"Added {len(saved_files)} PDF file(s). Rebuild the index before asking new questions.")
                 st.rerun()
             else:
                 st.warning("No valid PDF files were uploaded.")
 
-        if documents:
-            removable_names = [document["name"] for document in documents]
-            selected_document = st.selectbox("Remove a PDF", removable_names)
-            if selected_document in SAMPLE_DOCUMENTS:
-                st.caption("This is the bundled sample. Removing it only deletes your local copy.")
-
-            if st.button("Remove selected PDF", use_container_width=True):
-                if remove_document(selected_document):
-                    st.warning(f"Removed {selected_document}. Rebuild the index to refresh search results.")
-                    st.rerun()
-                else:
-                    st.error("The selected file could not be removed.")
-
         st.divider()
+        if index_dirty:
+            st.warning("The document set changed. Rebuild the index to continue asking questions.")
+
         if st.button("Rebuild document index", type="primary", use_container_width=True):
             with st.spinner("Rebuilding the vector index..."):
                 try:
                     on_index_rebuilt()
                     gc.collect()
                     file_count, chunk_count = rebuild_vector_index()
+                    st.session_state.index_dirty = False
                     on_index_rebuilt()
                     gc.collect()
                     st.success(f"Indexed {file_count} PDF file(s) into {chunk_count} chunks.")
@@ -152,11 +179,15 @@ def init_chat_state():
     if "is_generating" not in st.session_state:
         st.session_state.is_generating = False
 
+    if "index_dirty" not in st.session_state:
+        st.session_state.index_dirty = False
+
 
 def render_quick_prompts():
     prompt_cols = st.columns(len(EXAMPLE_PROMPTS))
+    disabled = st.session_state.is_generating or st.session_state.index_dirty
     for col, example in zip(prompt_cols, EXAMPLE_PROMPTS):
-        if col.button(example, use_container_width=True, disabled=st.session_state.is_generating):
+        if col.button(example, use_container_width=True, disabled=disabled):
             st.session_state.active_prompt = example
             st.session_state.is_generating = True
             st.rerun()
@@ -171,7 +202,7 @@ def render_chat_history():
 def get_current_prompt():
     prompt = st.chat_input(
         "Example: What are the main risk factors mentioned?",
-        disabled=st.session_state.is_generating,
+        disabled=st.session_state.is_generating or st.session_state.index_dirty,
     )
     if prompt and not st.session_state.is_generating:
         st.session_state.active_prompt = prompt
@@ -221,6 +252,9 @@ def render_chat_response(qa_chain, prompt):
 
 
 def handle_chat(qa_chain):
+    if st.session_state.index_dirty:
+        st.warning("Rebuild the document index before asking another question.")
+
     render_quick_prompts()
     render_chat_history()
     get_current_prompt()
