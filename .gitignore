@@ -69,6 +69,6 @@ Thumbs.db
 .flake8
 pyproject.toml.local
 
-# Database Vettoriale e Dati
+# Vector Database and Data
 chroma_db/
 data/

@@ -1,95 +1,100 @@
 import streamlit as st
 from langchain_community.vectorstores import Chroma
-from langchain_community.embeddings import OllamaEmbeddings
-from langchain_community.llms import Ollama
-from langchain.chains import RetrievalQA
-from langchain.prompts import PromptTemplate
+from langchain_core.output_parsers import StrOutputParser
+from langchain_core.prompts import PromptTemplate
+from langchain_core.runnables import RunnablePassthrough
+from langchain_ollama import OllamaEmbeddings, OllamaLLM
 
 import os
 
-# --- COSTANTI & PERCORSI ---
-# Trova la cartella 'src' e poi sale di un livello fino alla root del progetto
+# --- CONSTANTS & PATHS ---
+# Find the src folder, then move one level up to the project root.
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 DATA_FOLDER = os.path.join(BASE_DIR, "data")
 DB_FOLDER = os.path.join(BASE_DIR, "chroma_db")
 EMBEDDING_MODEL = "nomic-embed-text"
 LLM_MODEL = "llama3"
+K_RESULTS = 4
 
-# --- CONFIGURAZIONE INTERFACCIA ---
+# --- UI CONFIGURATION ---
 st.set_page_config(page_title="Financial RAG Assistant", page_icon="🏦")
 st.title("🏦 Financial RAG Assistant")
-st.markdown("Chiedimi qualsiasi cosa sui documenti finanziari che hai caricato!")
+st.markdown("Ask me anything about the financial documents you loaded.")
 
-# --- INIZIALIZZAZIONE SISTEMA RAG ---
-# Usiamo st.cache_resource così carica il database e il modello solo la prima volta
+# --- RAG SYSTEM INITIALIZATION ---
+# st.cache_resource loads the database and model only once.
+def format_docs(docs):
+    return "\n\n".join(doc.page_content for doc in docs)
+
 @st.cache_resource
 def load_rag_chain():
-    # 1. Ricarica il database vettoriale
+    # 1. Reload the vector database.
     embeddings = OllamaEmbeddings(model=EMBEDDING_MODEL)
     db = Chroma(persist_directory=DB_FOLDER, embedding_function=embeddings)
     
-    # 2. Configura il Retriever (recupera i 4 blocchi di testo più pertinenti)
-    retriever = db.as_retriever(search_kwargs={"k": 4})
+    # 2. Configure the retriever.
+    retriever = db.as_retriever(search_kwargs={"k": K_RESULTS})
     
-    # 3. Inizializza il Large Language Model (Llama 3)
-    llm = Ollama(model=LLM_MODEL)
+    # 3. Initialize the large language model.
+    llm = OllamaLLM(model=LLM_MODEL)
     
-    # 4. Creiamo un Prompt ingegnerizzato (Prompt Engineering)
-    # Diciamo al modello di usare SOLO i documenti per evitare "allucinazioni"
-    template = """Sei un consulente finanziario esperto. 
-    Usa ESCLUSIVAMENTE le seguenti porzioni di contesto recuperato dai documenti per rispondere alla domanda. 
-    Se la risposta non è contenuta nel contesto, rispondi: "Mi dispiace, ma non ho trovato informazioni a riguardo nei documenti caricati." Non inventare mai cifre o dati.
+    # 4. Build a strict prompt to keep answers grounded in the retrieved documents.
+    template = """You are an expert financial advisor.
+    Use ONLY the following context excerpts retrieved from the documents to answer the question.
+    If the answer is not contained in the context, answer: "I am sorry, but I could not find information about that in the loaded documents." Never invent figures or data.
 
-    Contesto: {context}
+    Context: {context}
 
-    Domanda: {question}
+    Question: {question}
 
-    Risposta:"""
+    Answer:"""
     
-    PROMPT = PromptTemplate(template=template, input_variables=["context", "question"])
+    prompt_template = PromptTemplate(template=template, input_variables=["context", "question"])
     
-    # 5. Uniamo tutto in una Catena (Chain) di LangChain
-    qa_chain = RetrievalQA.from_chain_type(
-        llm=llm,
-        chain_type="stuff",
-        retriever=retriever,
-        chain_type_kwargs={"prompt": PROMPT}
+    # 5. Combine retrieval, prompt, and model in a RAG pipeline.
+    qa_chain = (
+        {
+            "context": retriever | format_docs,
+            "question": RunnablePassthrough(),
+        }
+        | prompt_template
+        | llm
+        | StrOutputParser()
     )
     return qa_chain
 
-# Carica il sistema
+# Load the system.
 qa_chain = load_rag_chain()
 
-# --- GESTIONE DELLA CHAT UI ---
-# Inizializza la cronologia della chat nello state di Streamlit
+# --- CHAT UI HANDLING ---
+# Initialize the chat history in Streamlit session state.
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# Mostra i messaggi precedenti
+# Display previous messages.
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# Input dell'utente
-if prompt := st.chat_input("Es: Quali sono i principali fattori di rischio menzionati?"):
-    # Salva e mostra il messaggio dell'utente
+# User input.
+if prompt := st.chat_input("Example: What are the main risk factors mentioned?"):
+    # Save and display the user message.
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
-    # Genera la risposta dell'AI
+    # Generate the AI response.
     with st.chat_message("assistant"):
-        with st.spinner("Sto consultando i documenti finanziari..."):
+        with st.spinner("Searching the financial documents..."):
             try:
-                # Esegui la catena RAG
-                result = qa_chain.invoke({"query": prompt})
-                response = result["result"]
+                # Run the RAG chain.
+                response = qa_chain.invoke(prompt)
                 
-                # Mostra la risposta
+                # Display the response.
                 st.markdown(response)
                 
-                # Salva la risposta nella cronologia
+                # Save the response in the chat history.
                 st.session_state.messages.append({"role": "assistant", "content": response})
             except Exception as e:
-                st.error(f"Si è verificato un errore: {e}")
+                st.error(f"An error occurred: {e}")
