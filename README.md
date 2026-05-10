@@ -141,6 +141,7 @@ The repository includes a sample financial PDF, so you can test the app immediat
 
 **PDF upload and index rebuild workflow**
 ![Document management](docs/screenshots/document-management.png)
+![Document management after upload](docs/screenshots/document-management-2.png)
 
 **Example RAG answer**
 ![Example RAG answer](docs/screenshots/rag-answer.png)
@@ -203,6 +204,35 @@ The system is designed to run entirely on the local machine:
 - Answer quality depends on PDF text extraction and retrieval quality.
 - Source citations are not currently displayed in the chat.
 - Generated answers are not financial advice.
+
+## Troubleshooting
+
+### Uploaded documents are not reflected in answers
+
+Click **Rebuild document index** in the sidebar after adding or removing PDFs.
+
+### Index rebuild fails because the database is locked or read-only
+
+If Chroma or SQLite reports a database write error, stop the Streamlit app and start it again:
+
+```bash
+streamlit run src/app.py
+```
+
+Then click **Rebuild document index** again. You can also rebuild the index from the command line:
+
+```bash
+python src/ingest.py
+```
+
+### Ollama model errors
+
+Make sure Ollama is running and the required models are installed:
+
+```bash
+ollama serve
+ollama list
+```
 
 ## Development Workflow
 

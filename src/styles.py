@@ -47,17 +47,120 @@ APP_CSS = """
     color: var(--muted);
 }
 [data-testid="stSidebar"] div[data-testid="stFileUploader"] section {
-    background: #ffffff;
-    border: 1px dashed #94a3b8;
-    border-radius: 12px;
+    background: #ffffff !important;
+    border: 1px dashed #94a3b8 !important;
+    border-radius: 12px !important;
 }
+[data-testid="stSidebar"] div[data-testid="stFileUploader"] section,
 [data-testid="stSidebar"] div[data-testid="stFileUploader"] section * {
-    color: var(--ink);
+    color: var(--ink) !important;
+}
+[data-testid="stSidebar"] div[data-testid="stFileUploader"] section div,
+[data-testid="stSidebar"] div[data-testid="stFileUploader"] section article,
+[data-testid="stSidebar"] div[data-testid="stFileUploader"] section aside,
+[data-testid="stSidebar"] div[data-testid="stFileUploader"] section button {
+    background-color: #ffffff !important;
+    color: var(--ink) !important;
+}
+[data-testid="stSidebar"] div[data-testid="stFileUploader"] section svg,
+[data-testid="stSidebar"] div[data-testid="stFileUploader"] section svg * {
+    color: var(--blue) !important;
+    fill: none !important;
+    stroke: currentColor !important;
+}
+[data-testid="stSidebar"] div[data-testid="stFileUploader"] section p,
+[data-testid="stSidebar"] div[data-testid="stFileUploader"] section span,
+[data-testid="stSidebar"] div[data-testid="stFileUploader"] section small {
+    color: var(--ink) !important;
+}
+[data-testid="stSidebar"] div[data-testid="stFileUploader"] section small,
+[data-testid="stSidebar"] div[data-testid="stFileUploader"] section span:last-child {
+    color: var(--muted) !important;
 }
 [data-testid="stSidebar"] div[data-testid="stFileUploader"] button {
     background: #ffffff;
     border: 1px solid var(--line);
-    color: var(--ink);
+    color: var(--accent-strong);
+}
+[data-testid="stSidebar"] div[data-testid="stFileUploader"] button svg,
+[data-testid="stSidebar"] div[data-testid="stFileUploader"] button svg * {
+    color: var(--accent-strong) !important;
+    fill: none !important;
+    stroke: currentColor !important;
+}
+[data-testid="stSidebar"] div[data-testid="stFileUploader"] > div:not(:first-child),
+[data-testid="stSidebar"] div[data-testid="stFileUploader"] > div:not(:first-child) > div,
+[data-testid="stSidebar"] div[data-testid="stFileUploader"] > div:not(:first-child) > div > div {
+    background: #ffffff !important;
+    border-color: var(--line) !important;
+    color: var(--ink) !important;
+}
+[data-testid="stSidebar"] div[data-testid="stFileUploader"] > div:not(:first-child) {
+    border: 1px solid var(--line) !important;
+    border-radius: 10px !important;
+    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.04) !important;
+    margin-top: 0.45rem !important;
+}
+[data-testid="stSidebar"] div[data-testid="stFileUploader"] > div:not(:first-child) *,
+[data-testid="stSidebar"] div[data-testid="stFileUploader"] [class*="file"] *,
+[data-testid="stSidebar"] div[data-testid="stFileUploader"] [class*="File"] * {
+    color: var(--ink) !important;
+}
+[data-testid="stSidebar"] div[data-testid="stFileUploader"] > div:not(:first-child) small,
+[data-testid="stSidebar"] div[data-testid="stFileUploader"] > div:not(:first-child) span:last-child {
+    color: var(--muted) !important;
+}
+[data-testid="stSidebar"] div[data-testid="stFileUploader"] ul,
+[data-testid="stSidebar"] div[data-testid="stFileUploader"] li,
+[data-testid="stSidebar"] div[data-testid="stFileUploader"] [data-testid="stFileUploaderFile"],
+[data-testid="stSidebar"] div[data-testid="stFileUploader"] [data-testid="stFileUploaderFileData"],
+[data-testid="stSidebar"] div[data-testid="stFileUploader"] [data-testid="stFileUploaderFileName"],
+[data-testid="stSidebar"] div[data-testid="stFileUploader"] [data-testid="stFileUploaderFileSize"] {
+    background: #ffffff !important;
+    color: var(--ink) !important;
+}
+[data-testid="stSidebar"] div[data-testid="stFileUploader"] [data-testid="stFileUploaderFile"] {
+    border: 1px solid var(--line) !important;
+    border-radius: 10px !important;
+    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.04) !important;
+    margin-top: 0.45rem !important;
+}
+[data-testid="stSidebar"] div[data-testid="stFileUploader"] [data-testid="stFileUploaderFile"] *,
+[data-testid="stSidebar"] div[data-testid="stFileUploader"] li *,
+[data-testid="stSidebar"] div[data-testid="stFileUploader"] svg {
+    color: var(--blue) !important;
+    fill: none !important;
+    stroke: currentColor !important;
+}
+[data-testid="stSidebar"] div[data-testid="stFileUploader"] [data-testid="stFileUploaderFileSize"],
+[data-testid="stSidebar"] div[data-testid="stFileUploader"] small {
+    color: var(--muted) !important;
+}
+[data-testid="stSidebar"] div[data-testid="stFileUploader"] [data-testid="stFileUploaderDeleteBtn"],
+[data-testid="stSidebar"] div[data-testid="stFileUploader"] [data-testid="stFileUploaderDeleteBtn"] button {
+    background: #ffffff !important;
+    border-color: var(--line) !important;
+    color: #dc2626 !important;
+}
+[data-testid="stSidebar"] div[data-testid="stFileUploader"] [data-testid="stFileUploaderDeleteBtn"] svg,
+[data-testid="stSidebar"] div[data-testid="stFileUploader"] [data-testid="stFileUploaderDeleteBtn"] svg * {
+    color: #dc2626 !important;
+    fill: none !important;
+    stroke: currentColor !important;
+}
+[data-testid="stSidebar"] [data-testid="stTooltipIcon"] svg,
+[data-testid="stSidebar"] [data-testid="stTooltipIcon"] svg *,
+[data-testid="stSidebar"] [aria-label*="help" i] svg,
+[data-testid="stSidebar"] [title*="help" i] svg {
+    color: var(--blue) !important;
+    fill: none !important;
+    stroke: currentColor !important;
+}
+[data-testid="stSidebar"] div[data-testid="stFileUploader"] section button:not([data-testid="stFileUploaderDeleteBtn"]) svg,
+[data-testid="stSidebar"] div[data-testid="stFileUploader"] section button:not([data-testid="stFileUploaderDeleteBtn"]) svg * {
+    color: var(--accent-strong) !important;
+    fill: none !important;
+    stroke: currentColor !important;
 }
 [data-testid="stSidebar"] div[data-baseweb="select"] > div {
     background: #ffffff;
@@ -211,6 +314,30 @@ div[data-testid="stChatMessage"] [data-testid="stAlert"] {
     background: #fffbeb;
     border: 1px solid #fde68a;
     color: #78350f;
+}
+[data-testid="stChatInput"] {
+    background: transparent !important;
+}
+[data-testid="stChatInput"] > div,
+[data-testid="stChatInput"] textarea,
+[data-testid="stChatInput"] div[data-baseweb="textarea"] {
+    background: #ffffff !important;
+    border-color: var(--line) !important;
+    color: var(--ink) !important;
+}
+[data-testid="stChatInput"] textarea {
+    border-radius: 14px !important;
+    box-shadow: 0 12px 36px rgba(15, 23, 42, 0.08) !important;
+}
+[data-testid="stChatInput"] textarea::placeholder {
+    color: var(--muted) !important;
+    opacity: 1 !important;
+}
+[data-testid="stChatInput"] button,
+[data-testid="stChatInput"] button * {
+    color: var(--accent-strong) !important;
+    fill: var(--accent-strong) !important;
+    stroke: var(--accent-strong) !important;
 }
 div.stButton > button {
     background: #ffffff;

@@ -1,3 +1,4 @@
+import gc
 import html
 
 import streamlit as st
@@ -103,8 +104,11 @@ def render_sidebar(on_index_rebuilt):
         if st.button("Rebuild document index", type="primary", use_container_width=True):
             with st.spinner("Rebuilding the vector index..."):
                 try:
+                    on_index_rebuilt()
+                    gc.collect()
                     file_count, chunk_count = rebuild_vector_index()
                     on_index_rebuilt()
+                    gc.collect()
                     st.success(f"Indexed {file_count} PDF file(s) into {chunk_count} chunks.")
                     st.rerun()
                 except Exception as exc:
@@ -142,6 +146,9 @@ def init_chat_state():
     if "pending_prompt" not in st.session_state:
         st.session_state.pending_prompt = None
 
+    if "active_prompt" not in st.session_state:
+        st.session_state.active_prompt = None
+
     if "is_generating" not in st.session_state:
         st.session_state.is_generating = False
 
@@ -149,8 +156,9 @@ def init_chat_state():
 def render_quick_prompts():
     prompt_cols = st.columns(len(EXAMPLE_PROMPTS))
     for col, example in zip(prompt_cols, EXAMPLE_PROMPTS):
-        if col.button(example, use_container_width=True):
-            st.session_state.pending_prompt = example
+        if col.button(example, use_container_width=True, disabled=st.session_state.is_generating):
+            st.session_state.active_prompt = example
+            st.session_state.is_generating = True
             st.rerun()
 
 
@@ -161,10 +169,14 @@ def render_chat_history():
 
 
 def get_current_prompt():
-    chat_prompt = st.chat_input("Example: What are the main risk factors mentioned?")
-    prompt = st.session_state.pending_prompt or chat_prompt
-    st.session_state.pending_prompt = None
-    return prompt
+    prompt = st.chat_input(
+        "Example: What are the main risk factors mentioned?",
+        disabled=st.session_state.is_generating,
+    )
+    if prompt and not st.session_state.is_generating:
+        st.session_state.active_prompt = prompt
+        st.session_state.is_generating = True
+        st.rerun()
 
 
 def render_chat_response(qa_chain, prompt):
@@ -173,17 +185,22 @@ def render_chat_response(qa_chain, prompt):
             response = "The document index is not ready yet. Upload one or more PDFs, then click **Rebuild document index** in the sidebar."
             st.warning(response)
             st.session_state.messages.append({"role": "assistant", "content": response})
+            st.session_state.active_prompt = None
+            st.session_state.is_generating = False
             return
 
-        stop_requested = st.button("Stop generation", key="stop_generation", use_container_width=False)
+        stop_button = st.empty()
+        stop_requested = stop_button.button("Stop generation", key="stop_generation", use_container_width=False)
         if stop_requested:
+            stop_button.empty()
+            st.session_state.active_prompt = None
             st.session_state.is_generating = False
-            st.info("Generation stopped.")
-            st.stop()
+            st.session_state.messages.append({"role": "assistant", "content": "Generation stopped."})
+            st.rerun()
 
         response_placeholder = st.empty()
         response = ""
-        st.session_state.is_generating = True
+        completed = False
 
         try:
             with st.spinner("Searching the financial documents..."):
@@ -192,23 +209,35 @@ def render_chat_response(qa_chain, prompt):
                     response_placeholder.markdown(response)
 
             st.session_state.messages.append({"role": "assistant", "content": response})
+            completed = True
         except Exception as exc:
             st.error(f"An error occurred: {exc}")
         finally:
+            stop_button.empty()
+            st.session_state.active_prompt = None
             st.session_state.is_generating = False
+            if completed:
+                st.rerun()
 
 
 def handle_chat(qa_chain):
     render_quick_prompts()
     render_chat_history()
+    get_current_prompt()
 
-    prompt = get_current_prompt()
+    prompt = st.session_state.active_prompt
     if not prompt:
-        st.session_state.is_generating = False
         return
 
-    st.session_state.messages.append({"role": "user", "content": prompt})
-    with st.chat_message("user"):
-        st.markdown(prompt)
+    should_append_user_message = not (
+        st.session_state.messages
+        and st.session_state.messages[-1]["role"] == "user"
+        and st.session_state.messages[-1]["content"] == prompt
+    )
+
+    if should_append_user_message:
+        st.session_state.messages.append({"role": "user", "content": prompt})
+        with st.chat_message("user"):
+            st.markdown(prompt)
 
     render_chat_response(qa_chain, prompt)

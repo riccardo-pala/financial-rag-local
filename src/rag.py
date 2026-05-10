@@ -5,7 +5,8 @@ from langchain_core.prompts import PromptTemplate
 from langchain_core.runnables import RunnablePassthrough
 from langchain_ollama import OllamaEmbeddings, OllamaLLM
 
-from config import DB_FOLDER, EMBEDDING_MODEL, K_RESULTS, LLM_MODEL
+from config import EMBEDDING_MODEL, K_RESULTS, LLM_MODEL
+from documents import get_active_index_path
 
 
 def format_docs(docs):
@@ -15,7 +16,7 @@ def format_docs(docs):
 @st.cache_resource
 def load_rag_chain():
     embeddings = OllamaEmbeddings(model=EMBEDDING_MODEL)
-    db = Chroma(persist_directory=str(DB_FOLDER), embedding_function=embeddings)
+    db = Chroma(persist_directory=str(get_active_index_path()), embedding_function=embeddings)
     retriever = db.as_retriever(search_kwargs={"k": K_RESULTS})
     llm = OllamaLLM(model=LLM_MODEL)
 

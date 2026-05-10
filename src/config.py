@@ -5,6 +5,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 DATA_FOLDER = BASE_DIR / "data"
 DB_FOLDER = BASE_DIR / "chroma_db"
+ACTIVE_INDEX_FILE = DB_FOLDER / "active_index.txt"
 
 EMBEDDING_MODEL = "nomic-embed-text"
 LLM_MODEL = "llama3"

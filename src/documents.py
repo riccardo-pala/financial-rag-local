@@ -1,5 +1,6 @@
-import shutil
+from datetime import datetime
 from pathlib import Path
+from uuid import uuid4
 
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_community.vectorstores import Chroma
@@ -7,6 +8,7 @@ from langchain_ollama import OllamaEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 from config import (
+    ACTIVE_INDEX_FILE,
     CHUNK_OVERLAP,
     CHUNK_SIZE,
     DATA_FOLDER,
@@ -25,7 +27,27 @@ def format_file_size(size_bytes):
 
 
 def index_exists():
-    return (DB_FOLDER / "chroma.sqlite3").exists()
+    return (get_active_index_path() / "chroma.sqlite3").exists()
+
+
+def get_active_index_path():
+    if ACTIVE_INDEX_FILE.exists():
+        index_name = ACTIVE_INDEX_FILE.read_text().strip()
+        if index_name:
+            return DB_FOLDER / index_name
+
+    # Backward compatibility with older single-folder Chroma indexes.
+    return DB_FOLDER
+
+
+def create_next_index_path():
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    return DB_FOLDER / f"index_{timestamp}_{uuid4().hex[:8]}"
+
+
+def set_active_index_path(index_path):
+    DB_FOLDER.mkdir(parents=True, exist_ok=True)
+    ACTIVE_INDEX_FILE.write_text(index_path.name)
 
 
 def list_loaded_documents():
@@ -89,14 +111,14 @@ def rebuild_vector_index():
     )
     chunks = text_splitter.split_documents(documents)
 
-    if DB_FOLDER.exists():
-        shutil.rmtree(DB_FOLDER)
-
+    DB_FOLDER.mkdir(parents=True, exist_ok=True)
+    next_index_path = create_next_index_path()
     embeddings = OllamaEmbeddings(model=EMBEDDING_MODEL)
     db = Chroma.from_documents(
         documents=chunks,
         embedding=embeddings,
-        persist_directory=str(DB_FOLDER),
+        persist_directory=str(next_index_path),
     )
     db.persist()
+    set_active_index_path(next_index_path)
     return len(pdf_files), len(chunks)
